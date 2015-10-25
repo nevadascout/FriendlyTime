@@ -25,25 +25,25 @@
                 }
 
                 // Less than 2 minutes ago
-                if (diff.TotalSeconds < 120)
+                if (diff.TotalMinutes < 2)
                 {
                     return "1 minute ago";
                 }
 
                 // Less than 1 hour ago
-                if (diff.TotalSeconds < 3600)
+                if (diff.TotalHours < 1)
                 {
                     return $"{Math.Floor(diff.TotalSeconds / 60)} minutes ago";
                 }
 
                 // Less than 2 hours ago
-                if (diff.TotalSeconds < 7200)
+                if (diff.TotalHours < 2)
                 {
                     return "1 hour ago";
                 }
 
                 // Any other number of hours (up to 24 hours ago, but will always be within the current day)
-                if (diff.TotalSeconds < 86400)
+                if (diff.TotalHours < 24)
                 {
                     return $"{Math.Floor(diff.TotalSeconds / 3600)} hours ago";
                 }
@@ -56,33 +56,76 @@
             }
 
             // Otherwise, it's days, weeks, months or years
+            var currentWeekStart = now.StartOfWeek();
+            var lastWeekStart = currentWeekStart.AddDays(-7);
 
             // Within this week
-            //var weekStart = now.StartOfWeek();
-            //if (weekStart.Subtract(dateTime).Days < 7)
-            //{
-            //    return "";
-            //}
+            if (dateTime >= currentWeekStart && dateTime < now)
+            {
+                var weekDiff = dateTime.Subtract(currentWeekStart);
+
+                if (weekDiff.Days < 7)
+                {
+                    return $"{weekDiff.Days} days ago";
+                }
+            }
 
             // Last week
-
-
+            if (dateTime >= lastWeekStart && dateTime < currentWeekStart)
+            {
+                return "Last week";
+            }
+            
             // Within the current month
+            if (dateTime.Month == now.Month && dateTime.Year == now.Year)
+            {
+                return $"{Math.Ceiling(diff.TotalDays / 7)} weeks ago";
+            }
 
             // Last month
-
-
+            if (dateTime.Month == now.AddMonths(-1).Month && dateTime.Year == now.Year)
+            {
+                return "Last month";
+            }
+            
             // Within the current year
+            if (dateTime.Year == now.Year && dateTime < now)
+            {
+                if (dateTime.Month <= now.Month)
+                {
+                    var monthDiff = now.Month - dateTime.Month;
+
+                    return $"{monthDiff} months ago";
+                }
+            }
 
             // Last year
+            if (dateTime.Year == now.AddYears(-1).Year)
+            {
+                return "Last year";
+            }
 
 
-            // x number of years
+            // TODO -- x number of years
 
 
 
             // Failsafe
-            return dateTime.ToString(CultureInfo.InvariantCulture);
+            return dateTime.ToLongDateString();
+        }
+    }
+
+    public static class DateTimeExtensions
+    {
+        public static DateTime StartOfWeek(this DateTime dt)
+        {
+            var diff = dt.DayOfWeek - DayOfWeek.Monday;
+            if (diff < 0)
+            {
+                diff += 7;
+            }
+
+            return dt.AddDays(-1 * diff).Date;
         }
     }
 }
